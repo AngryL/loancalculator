@@ -6,7 +6,6 @@ function CalculatorInputs(props) {
   let inputs = props.inputs;
 
   function makeInput(key) {
-    console.log("MakeInput +" + key + ":" + inputs.key);
     return (
       <input
         type="number"
