@@ -48,11 +48,13 @@ class LoanScheduleCalculator extends Component {
     this.state = initialState;
   }
 
+
   reverseIsSimple = () => {
     this.setState({ isSimple: !this.state.isSimple });
     console.log("მარტივი");
   };
 
+  // Updates state when the date input is filled. 
   updateDate = e => {
     let value = e.target.value;
     let calculatorInputs = this.state.calculatorInputs;
@@ -79,16 +81,15 @@ class LoanScheduleCalculator extends Component {
     });
   };
 
+  // Creates table for the loan calculator
   calculateOutput = () => {
     let that = this;
     let currentInputs = this.state.calculatorInputs;
     if (!this.checkCurrentInputs(currentInputs, this.state.isSimple)) {
       this.setState({ calculatorOutput: initialState.calculatorOutput });
-
       return {};
     }
     let monthlyPayment = this.getPMT();
-    console.log("Monthly Payment is: " + monthlyPayment);
     let items = createTableItems(currentInputs.numberOfMonths);
 
     function createTableItems(number) {
@@ -110,6 +111,7 @@ class LoanScheduleCalculator extends Component {
     return items;
   };
 
+  // Checks if inputs are valid, returns boolean
   checkCurrentInputs = (currentInputs, simple) => {
     let isValid = true;
     if (!checkSimpleAndDate()) {
@@ -135,6 +137,8 @@ class LoanScheduleCalculator extends Component {
     }
   };
 
+  // Takes Current month number and the object generated previously with this function.
+  // Getnerates the next item for the calculator output.
   getNextItem = (currentMonthNumber, previousMonth) => {
     let currentInputs = this.state.calculatorInputs;
     let monthlyPayment = this.getPMT();
