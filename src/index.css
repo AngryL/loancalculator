@@ -1,3 +1,7 @@
+/* I must implement this solution in order to make only 4 items in the row
+https://stackoverflow.com/questions/29546550/flexbox-4-items-per-row
+ */
+
 body {
   margin: 0;
   padding: 0;
@@ -36,6 +40,7 @@ align-content: flex-start
 }
 
 /* https://www.w3schools.com/css/tryit.asp?filename=trycss_table_fancy */
+
 #CalculatorOutputTable {
   font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
   border-collapse: collapse;

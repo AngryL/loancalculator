@@ -1,8 +1,18 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import LoanCalculator from './LoanCalculator';
-import registerServiceWorker from './registerServiceWorker';
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import registerServiceWorker from "./registerServiceWorker";
+import LoanScheduleCalculator from "./LoanScheduleCalculator";
 
-ReactDOM.render(<LoanCalculator />, document.getElementById('root'));
+class Application extends React.Component {
+  render() {
+    return (
+      <div className="Calculators">
+        <LoanScheduleCalculator />
+      </div>
+    );
+  }
+}
+
+ReactDOM.render(<Application />, document.getElementById("root"));
 registerServiceWorker();
