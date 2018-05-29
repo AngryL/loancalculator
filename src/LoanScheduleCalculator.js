@@ -20,7 +20,7 @@ const initialState = {
     loanAmount: 9500,
     monthlyPayment: 0,
     interestRate: 15,
-    numberOfMonths: 15,
+    numberOfMonths: 1,
     // Date the loan was issued
     loanDate: formatDate(new Date()),
     // Day of the month loan must be paid
@@ -53,16 +53,6 @@ class LoanScheduleCalculator extends Component {
     console.log("მარტივი");
   };
 
-  // Updates state when the date input is filled.
-  updateDate = e => {
-    let value = e.target.value;
-    let calculatorInputs = this.state.calculatorInputs;
-    calculatorInputs.loanDate = value;
-    this.setState({
-      calculatorInputs: calculatorInputs
-    });
-  };
-
   // Key - corresponding element into the current state for the given input
   // MODIFIES: updates the state according to the given input
   updateInputs = (input, key) => {
@@ -75,6 +65,19 @@ class LoanScheduleCalculator extends Component {
     });
     this.setState({
       calculatorInputs: currentCalculatorInputs
+    });
+  };
+
+  // Updates state when the date input is filled.
+  updateDateInput = e => {
+    let value = e.target.value;
+    let calculatorInputs = this.state.calculatorInputs;
+    calculatorInputs.loanDate = value;
+    console.log("Date Input Updating...");
+    console.log(calculatorInputs.loanDate);
+
+    this.setState({
+      calculatorInputs: calculatorInputs
     });
   };
 
@@ -126,9 +129,10 @@ class LoanScheduleCalculator extends Component {
   getNextItem = (currentMonthNumber, previousMonth, isCalculatedFirst) => {
     let currentInputs = this.state.calculatorInputs;
 
-    let nextPayDate = formatDate(
-      getNextPayDate(isCalculatedFirst, currentInputs)
+    let payDate = formatDate(
+      getNextPayDate(isCalculatedFirst, currentInputs.loanDate, previousMonth)
     );
+
     let monthlyPayment = this.getPMT(currentInputs);
     let month = currentMonthNumber + 1;
     let startingBalance = previousMonth
@@ -141,8 +145,9 @@ class LoanScheduleCalculator extends Component {
       ? previousMonth.totalInterest + interest
       : interest;
 
-    if (!isCalculatedFirst) {
-      let daysDifference = PayDateLoanDate();
+    // Add the interest for days from the loan date to the first payment date to the first payment.
+    if (!isCalculatedFirst && !this.state.isSimple) {
+      let daysDifference = getDaysDifference();
       // Total interest for days elapsed from the loan date.
       let interestFromLoanDateToPayDay = interest * 12 / 365 * daysDifference;
 
@@ -154,7 +159,7 @@ class LoanScheduleCalculator extends Component {
 
     return {
       month: month,
-      payDay: nextPayDate,
+      payDay: payDate,
       startingBalance: startingBalance,
       interest: interest,
       principal: principal,
@@ -162,14 +167,15 @@ class LoanScheduleCalculator extends Component {
       totalInterest: totalInterest
     };
 
-    function PayDateLoanDate() {
+    // Returns difference in days between the day loan is given and the first payment date.
+    function getDaysDifference() {
       let loanDate = new Date(Date.parse(currentInputs.loanDate));
-      let payDayx = new Date(Date.parse(nextPayDate));
+      let payDayx = new Date(Date.parse(payDate));
       let differenceInDays = (payDayx - loanDate) / (60 * 60 * 24 * 1000);
       console.log(`PayDay - Loan Date: " + ${payDayx}
       Current Loan Date: ${currentInputs.loanDate}, Date Object: ${loanDate}
 
-      Next Loan Date: ${nextPayDate}, Date Object: ${payDayx}
+      Next Loan Date: ${payDate}, Date Object: ${payDayx}
 
       Difference between them: ${(payDayx - loanDate) / (60 * 60 * 24 * 1000)}
 
@@ -180,33 +186,57 @@ class LoanScheduleCalculator extends Component {
       return differenceInDays;
     }
 
-    function getNextPayDate(isCalculatedFirst, currentInputs) {
-      let loanDate = new Date(Date.parse(currentInputs.loanDate));
+    function getNextPayDate(isCalculatedFirst, currentLoanDate, previousMonth) {
+      // Current date for the loan to be paid
+      let loanDate = new Date(Date.parse(currentLoanDate));
       // Day of month loan is going to be paid
       let loanPayDay = currentInputs.loanPayDay;
-      comparePayDateLoanDates();
-      loanDate.setDate(loanPayDay);
-      checkHolidays();
-      return loanDate;
+      let initialDate = !isCalculatedFirst ? createInitialDate() : false;
+
+      // Date, which is going to be returned
+      let nextPayDate = initialDate ? initialDate : createNextDate();
+
+      let checkedForHolidays = checkHolidays(nextPayDate, loanPayDay);
+
+      return checkedForHolidays;
 
       // If pay day is less, than day of month the loan is given, increment month by 1
-      function comparePayDateLoanDates() {
-        if (!isCalculatedFirst && loanPayDay < loanDate.getDate()) {
-          loanDate.setMonth(loanDate.getMonth() + currentMonthNumber);
+      function createInitialDate() {
+        let initialLoanDate = new Date(Date.parse(currentLoanDate));
+        let initialPayDay = initialLoanDate.getDate();
+        let initialMonth = initialLoanDate.getMonth();
+
+        if (loanPayDay < initialPayDay) {
+          initialLoanDate.setMonth(initialMonth + 1);
         } else {
-          loanDate.setMonth(loanDate.getMonth() + currentMonthNumber);
         }
+        initialLoanDate.setDate(loanPayDay);
+
+        return initialLoanDate;
       }
 
-      function checkHolidays() {
-        let day = loanDate.getDay();
+      // If pay day is less, than day of month the loan is given, increment month by 1
+      function createNextDate() {
+        let previousMonthDate = new Date(Date.parse(previousMonth.payDay));
+        previousMonthDate.setMonth(previousMonthDate.getMonth() + 1);
+        return previousMonthDate;
+      }
+
+      //
+      function checkHolidays(date, defaultDayOfMonth) {
+        let day = date.getDay();
+
         switch (day) {
           case 0:
-            loanDate.setDate(loanPayDay + 1);
+            date.setDate(defaultDayOfMonth + 1);
             break;
           case 6:
-            loanDate.setDate(loanPayDay + 2);
+            date.setDate(defaultDayOfMonth + 2);
+            break;
+          default:
+            date.setDate(defaultDayOfMonth);
         }
+        return date;
       }
     }
   };
@@ -239,7 +269,7 @@ class LoanScheduleCalculator extends Component {
     }
   };
 
-  getPMT = (currentInputs) => {
+  getPMT = currentInputs => {
     let monthlyPayment = -finance.PMT(
       currentInputs.interestRate / 12 / 100,
       currentInputs.numberOfMonths,
@@ -263,7 +293,7 @@ class LoanScheduleCalculator extends Component {
         <CalculatorInputs
           inputs={this.state.calculatorInputs}
           onUpdateInput={this.updateInputs}
-          onUpdateDate={this.updateDate}
+          onUpdateDate={this.updateDateInput}
           calculateOutput={this.calculateOutput}
           isSimple={this.state.isSimple}
           isValid={this.state.isValid}
